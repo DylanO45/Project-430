@@ -67,9 +67,15 @@ module Ast
         end
     end
     
-    class Not < Boolean
+    class LogicalNot < BinaryOperator
         def visit(visitor)
-            visitor.visit_not(self)
+            visitor.visit_logical_not(self)
+        end
+    end
+
+    class LogicalAnd < BinaryOperator
+        def visit(visitor)
+            visitor.visit_logical_and(self)
         end
     end
 

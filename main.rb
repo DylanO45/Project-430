@@ -30,10 +30,20 @@ negation2 = Ast::Negate.new(neg_hundred)
 
 translator = Translator.new
 
-puts negation.visit(translator)
-puts negation.visit(Evaluator.new).visit(translator)
+# puts negation.visit(translator)
+# puts negation.visit(Evaluator.new).visit(translator)
 
-puts negation2.visit(translator)
-puts negation2.visit(Evaluator.new).visit(translator)
+# puts negation2.visit(translator)
+# puts negation2.visit(Evaluator.new).visit(translator)
 
-puts (1 && false)
+#not_equal = Ast::NotEqual.new(ten, ten)
+#puts not_equal.visit(translator)
+#puts not_equal.visit(Evaluator.new).visit(translator)
+
+
+bool_true = Ast::Boolean(true)
+bool_false = Ast::Boolean(false)
+
+logical_and = Ast::LogicalAnd.new(bool_true, bool_false)
+puts logical_and.visit(translator)
+puts logical_and.visit(Evaluator.new).visit(translator)

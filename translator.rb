@@ -33,11 +33,15 @@ class Translator
   end
 
   def visit_negate(node)
-       "#{node.raw_value.visit(self)}"
+       "!#{node.raw_value.visit(self)}"
   end
   
-  def visit_not(node)
+  def visit_logical_not(node)
       "#{node.left_node.visit(self)} != #{node.right_node.visit(self)}"
+  end
+ 
+  def visit_logical_and(node)
+      "#{node.left_node.visit(self)} && #{node.right_node.visit(self)}"
   end
   
 end

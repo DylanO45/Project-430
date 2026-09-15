@@ -75,18 +75,35 @@ class Evaluator
   end
 
 
-  # def visit_not(node)
-  #   left_primitive = node.left_node.visit(self)
-  #   right_primitive = node.right_node.visit(self)
+  def visit_logical_not(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
   
-  #   if left_primitive.is_a?(Ast::Integer) && right_primitive.is_a?(Ast::Integer)
-  #     not = left_primitive.raw_value != right_primitive.raw_value
-  #     Ast::Integer.new(not)
-  #   if left_primitive.is_a?(Ast::Boolean) && right_primitive.is_a?(Ast::Integer || Ast::Boolean)
-  #     not = left_primitive.raw_value != right_primitive.raw_value
-  #     Ast::Integer.new(not)
-  #   end
-  # end
+    # Integer case
+    if left_primitive.is_a?(Ast::Integer) && right_primitive.is_a?(Ast::Integer)
+      logical_not = left_primitive.raw_value != right_primitive.raw_value
+      Ast::Integer.new(logical_not)
+    # Boolean case
+    elsif left_primitive.is_a?(Ast::Boolean) && right_primitive.is_a?(Ast::Boolean)
+      logical_not = left_primitive.raw_value != right_primitive.raw_value
+      Ast::Integer.new(logical_not)
+    end
+  end
+
+  def visit_logical_and(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
+  
+    # Integer case
+    if left_primitive.is_a?(Ast::Integer) && right_primitive.is_a?(Ast::Integer)
+      logical_and = left_primitive.raw_value && right_primitive.raw_value
+      Ast::Integer.new(logical_and)
+    # Boolean case
+    elsif left_primitive.is_a?(Ast::Boolean) && right_primitive.is_a?(Ast::Boolean)
+      logical_and = left_primitive.raw_value && right_primitive.raw_value
+      Ast::Integer.new(logical_and)
+    end
+  end
 
 end
 
