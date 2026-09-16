@@ -4,7 +4,7 @@ require_relative 'evaluator.rb'
 class Translator
   #visit_... method turns current node into type String
 
-  def visit_integer(node)
+  def visit_type(node)
     node.raw_value.to_s
   end
 
@@ -43,5 +43,12 @@ class Translator
   def visit_logical_and(node)
       "#{node.left_node.visit(self)} && #{node.right_node.visit(self)}"
   end
-  
+
+  def visit_logical_or(node)
+      "#{node.left_node.visit(self)} || #{node.right_node.visit(self)}"
+  end
+
+  def visit_boolean(node) 
+      node.raw_boolean.to_s
+  end
 end

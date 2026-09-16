@@ -10,15 +10,26 @@ module Ast
         end
 
         def visit(visitor)
-            visitor.visit_integer(self)
+            visitor.visit_type(self)
         end
 
     end
+
+    class Float < Integer
+        def visit(visitor)
+            visitor.visit_type(self)
+        end
+    end
+    
     class Boolean
         attr_reader :raw_boolean
 
         def initialize(raw_boolean)
             @raw_boolean = raw_boolean
+        end
+
+        def visit(visitor)
+            visitor.visit_type(self)
         end
     end
 
@@ -83,6 +94,12 @@ module Ast
         
         def visit(visitor)
             visitor.visit_negate(self)
+        end
+    end
+
+    class LogicalOr < BinaryOperator
+        def visit(visitor)
+            visitor.visit_logical_or(self)
         end
     end
 end

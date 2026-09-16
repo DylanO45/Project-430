@@ -19,7 +19,6 @@ five = Ast::Integer.new(5)
 ten = Ast::Integer.new(10)
 three = Ast::Integer.new(3)
 neg_hundred = Ast::Integer.new(-100)
-
 #diff = Ast::Subtract.new(Ast::Add.new(five, one), ten)
 #product = Ast::Multiply.new(five, ten)
 #quotient = Ast::Divide.new(ten, five)
@@ -29,7 +28,7 @@ negation = Ast::Negate.new(ten)
 negation2 = Ast::Negate.new(neg_hundred)
 
 translator = Translator.new
-
+# puts one.visit(translator)
 # puts negation.visit(translator)
 # puts negation.visit(Evaluator.new).visit(translator)
 
@@ -40,10 +39,14 @@ translator = Translator.new
 #puts not_equal.visit(translator)
 #puts not_equal.visit(Evaluator.new).visit(translator)
 
+float1 = Ast::Float.new(2.5)
+float2 = Ast::Float.new(3.14)
 
-bool_true = Ast::Boolean(true)
-bool_false = Ast::Boolean(false)
+sum = Ast::Add.new(float1, ten)
 
-logical_and = Ast::LogicalAnd.new(bool_true, bool_false)
-puts logical_and.visit(translator)
-puts logical_and.visit(Evaluator.new).visit(translator)
+puts sum.visit(translator)
+puts sum.visit(Evaluator.new).visit(translator)
+
+# puts float1.class
+
+
