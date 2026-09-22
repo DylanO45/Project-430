@@ -15,7 +15,7 @@ class Translator
   def visit_subtract(node)
         "#{node.left_node.visit(self)} - #{node.right_node.visit(self)}"
   end
-  
+
   def visit_multiply(node)
         "#{node.left_node.visit(self)} * #{node.right_node.visit(self)}"
   end
@@ -35,11 +35,11 @@ class Translator
   def visit_negate(node)
        "!#{node.raw_value.visit(self)}"
   end
-  
+
   def visit_logical_not(node)
       "#{node.left_node.visit(self)} != #{node.right_node.visit(self)}"
   end
- 
+
   def visit_logical_and(node)
       "#{node.left_node.visit(self)} && #{node.right_node.visit(self)}"
   end
@@ -48,7 +48,7 @@ class Translator
       "#{node.left_node.visit(self)} || #{node.right_node.visit(self)}"
   end
 
-  def visit_boolean(node) 
-      node.raw_boolean.to_s
+  def visit_boolean(node)
+      node.raw_value.to_s
   end
 end
