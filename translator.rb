@@ -33,7 +33,7 @@ class Translator
   end
 
   def visit_negate(node)
-       "-#{node.raw_value.visit(self)}"
+       "(-)#{node.raw_value.visit(self)}"
   end
 
   def visit_logical_not(node)

@@ -222,7 +222,7 @@ puts
 
 # ================ NEGATION ================
 puts " Negate (Int) ".center(50, "=")
-result = Ast::Negate.new(five)
+result = Ast::Negate.new(neg_hundred)
 puts result.visit(translator)
 puts result.visit(evaluator).visit(translator)
 
