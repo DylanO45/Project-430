@@ -2,53 +2,6 @@ require_relative 'ast.rb'
 require_relative 'translator.rb'
 require_relative 'evaluator.rb'
 
-y = Ast::Integer.new(2)
-z = Ast::Integer.new(5)
-x = Ast::Add.new(y, z)
-
-# five = Ast::Integer.new(5)
-
-# three_nums = Ast::Add.new(Ast::Add.new(five, five), five)
-
-# translator = Translator.new
-# puts three_nums.visit(translator)
-# puts three_nums.visit(Evaluator.new).visit(translator)
-
-one = Ast::Integer.new(1)
-five = Ast::Integer.new(5)
-ten = Ast::Integer.new(10)
-three = Ast::Integer.new(3)
-neg_hundred = Ast::Integer.new(-100)
-#diff = Ast::Subtract.new(Ast::Add.new(five, one), ten)
-#product = Ast::Multiply.new(five, ten)
-#quotient = Ast::Divide.new(ten, five)
-#remainder = Ast::Modulo.new(ten, three)
-#power = Ast::Exponent.new(ten, three)
-negation = Ast::Negate.new(ten)
-negation2 = Ast::Negate.new(neg_hundred)
-
-translator = Translator.new
-# puts one.visit(translator)
-# puts negation.visit(translator)
-# puts negation.visit(Evaluator.new).visit(translator)
-
-# puts negation2.visit(translator)
-# puts negation2.visit(Evaluator.new).visit(translator)
-
-#not_equal = Ast::NotEqual.new(ten, ten)
-#puts not_equal.visit(translator)
-#puts not_equal.visit(Evaluator.new).visit(translator)
-
-# float1 = Ast::Float.new(2.5)
-# float2 = Ast::Float.new(3.14)
-
-# sum = Ast::Subtract.new(ten, float2)
-
-# puts sum.visit(translator)
-# puts sum.visit(Evaluator.new).visit(translator)
-
-# puts float1.class
-
 
 
 # ======================================================
@@ -67,6 +20,28 @@ float2 = Ast::Float.new(3.14)
 # Bools
 bool_true = Ast::Boolean.new(true)
 bool_false = Ast::Boolean.new(false)
+# Strings
+string = Ast::String.new("Hello")
+string2 = Ast::String.new("World")
+
+
+
+
+
+# result = Ast::LogicalAnd.new(bool_true, bool_false)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# result = Ast::LogicalOr.new(bool_true, bool_false)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# result = Ast::LogicalNot.new(one)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+
+
 
 
 
@@ -95,6 +70,11 @@ begin
 rescue RuntimeError => e
   puts "Error caught: #{e}"
 end
+
+puts " Addition (Both strings) ".center(50, "=")
+result5 = Ast::Add.new(string, string2)
+puts result5.visit(translator)
+puts result5.visit(evaluator).visit(translator)
 
 puts
 puts
@@ -251,18 +231,83 @@ result2 = Ast::Negate.new(float1)
 puts result2.visit(translator)
 puts result2.visit(evaluator).visit(translator)
 
-puts " Negate (Boolean true) ".center(50, "=")
+puts " Negate (Incompatible type) ".center(50, "=")
 result3 = Ast::Negate.new(bool_true)
-puts result3.visit(translator)
-puts result3.visit(evaluator).visit(translator)
+begin
+  puts result3.visit(translator)
+  puts result3.visit(evaluator).visit(translator)
+rescue RuntimeError => e
+  puts "Error caught: #{e}"
+end
 
-puts " Negate (Boolean false) ".center(50, "=")
-result3 = Ast::Negate.new(bool_false)
-puts result3.visit(translator)
-puts result3.visit(evaluator).visit(translator)
+puts
+puts
 
-puts " Negate (Incompatible types) ".center(50, "=")
-puts "TBD"
+# ================ LOGICAL AND ================
+puts " Logical And (Both bools) ".center(50, "=")
+result = Ast::LogicalAnd.new(bool_true, bool_false)
+puts result.visit(translator)
+puts result.visit(evaluator).visit(translator)
+
+puts " Logical And (Both bools) ".center(50, "=")
+result = Ast::LogicalAnd.new(bool_true, bool_true)
+puts result.visit(translator)
+puts result.visit(evaluator).visit(translator)
+
+puts " Logical And (Incompatible types) ".center(50, "=")
+result4 = Ast::LogicalAnd.new(ten, bool_true)
+begin
+  puts result4.visit(translator)
+  puts result4.visit(evaluator).visit(translator)
+rescue RuntimeError => e
+  puts "Error caught: #{e}"
+end
+
+puts
+puts
+
+# ================ LOGICAL OR ================
+puts " Logical Or (Both bools) ".center(50, "=")
+result = Ast::LogicalOr.new(bool_true, bool_false)
+puts result.visit(translator)
+puts result.visit(evaluator).visit(translator)
+
+puts " Logical Or (Both bools) ".center(50, "=")
+result = Ast::LogicalOr.new(bool_false, bool_false)
+puts result.visit(translator)
+puts result.visit(evaluator).visit(translator)
+
+puts " Logical Or (Incompatible types) ".center(50, "=")
+result4 = Ast::LogicalOr.new(ten, bool_true)
+begin
+  puts result4.visit(translator)
+  puts result4.visit(evaluator).visit(translator)
+rescue RuntimeError => e
+  puts "Error caught: #{e}"
+end
+
+puts
+puts
+
+# ================ LOGICAL NOT ================
+puts " Logical Not (True) ".center(50, "=")
+result = Ast::LogicalNot.new(bool_true)
+puts result.visit(translator)
+puts result.visit(evaluator).visit(translator)
+
+puts " Logical Not (False) ".center(50, "=")
+result = Ast::LogicalNot.new(bool_false)
+puts result.visit(translator)
+puts result.visit(evaluator).visit(translator)
+
+puts " Logical Not (Incompatible type) ".center(50, "=")
+result4 = Ast::LogicalNot.new(ten)
+begin
+  puts result4.visit(translator)
+  puts result4.visit(evaluator).visit(translator)
+rescue RuntimeError => e
+  puts "Error caught: #{e}"
+end
 
 puts
 puts

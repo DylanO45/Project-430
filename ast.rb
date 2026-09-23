@@ -15,7 +15,31 @@ module Ast
 
     end
 
+    class NULL
+        attr_reader :raw_value
+
+        def initialize(raw_value)
+            @raw_value = raw_value
+        end
+
+        def visit(visitor)
+            visitor.visit_type(self)
+        end
+    end
+
     class Float < Integer
+        def visit(visitor)
+            visitor.visit_type(self)
+        end
+    end
+
+    class String
+        attr_reader :raw_value
+
+        def initialize(raw_value)
+            @raw_value = raw_value
+        end
+
         def visit(visitor)
             visitor.visit_type(self)
         end
@@ -78,7 +102,7 @@ module Ast
         end
     end
 
-    class LogicalNot < BinaryOperator
+    class LogicalNot < Integer
         def visit(visitor)
             visitor.visit_logical_not(self)
         end
