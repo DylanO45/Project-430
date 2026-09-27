@@ -4,10 +4,10 @@ class Evaluator
   # Check the type compatibility of arithmetic operands
   def check_arith_ops(left, right)
     # if both ints, return :int
-    if left.is_a?(Ast::Integer) && right.is_a?(Ast::Integer)
+    if left.instance_of?(Ast::Integer) && right.instance_of?(Ast::Integer)
       :int
     # if one or more floats, return :float
-    elsif left.is_a?(Ast::Float) || right.is_a?(Ast::Float)
+    elsif left.instance_of?(Ast::Float) || right.instance_of?(Ast::Float)
       :float
     # else, return :incompatible
     else
@@ -17,7 +17,7 @@ class Evaluator
 
   # Check the type compatibility of logical operands
   def check_log_ops(left, right)
-    if left.is_a?(Ast::Boolean) && right.is_a?(Ast::Boolean)
+    if left.instance_of?(Ast::Boolean) && right.instance_of?(Ast::Boolean)
       true
     else
       false
@@ -26,14 +26,15 @@ class Evaluator
 
   # Check the type compatibility of comparison operands
   def check_comp_ops(left, right)
-    if left.is_a?(Ast:String) && right.is_a?(Ast:String)
+    if left.instance_of?(Ast::String) && right.instance_of?(Ast::String)
       true
-    elsif left.is_a?(Ast:Integer) || left.is_a?(Ast::Float) && right.is_a?(Ast:Integer) || right.is_a?(Ast::Float)
+    elsif (left.instance_of?(Ast::Integer) || left.instance_of?(Ast::Float)) && (right.instance_of?(Ast::Integer) || right.instance_of?(Ast::Float))
       true
     else
       false
     end
   end
+
 
 
   def visit_type(node)
@@ -56,7 +57,7 @@ class Evaluator
     return_type = check_arith_ops(left_primitive, right_primitive)
     if return_type == :incompatible
       # check if both ops are strings
-      if left_primitive.is_a?(Ast::String) && right_primitive.is_a?(Ast::String)
+      if left_primitive.instance_of?(Ast::String) && right_primitive.instance_of?(Ast::String)
         return_type =:string
       else
         raise "Invalid operand(s)"
@@ -202,7 +203,7 @@ class Evaluator
   def visit_negate(node)
     primitive = node.raw_value.visit(self)
 
-    if primitive.is_a?(Ast::Integer) || primitive.is_a?(Ast::Float)
+    if primitive.instance_of?(Ast::Integer) || primitive.instance_of?(Ast::Float)
       negation = (-1) * primitive.raw_value
       Ast::Integer.new(negation)
     else
@@ -215,7 +216,7 @@ class Evaluator
   def visit_logical_not(node)
     primitive = node.raw_value.visit(self)
 
-    if primitive.is_a?(Ast::Boolean)
+    if primitive.instance_of?(Ast::Boolean)
       logical_not = !primitive.raw_value
       Ast::Boolean.new(logical_not)
     else
@@ -245,6 +246,170 @@ class Evaluator
       Ast::Boolean.new(logical_or)
     else
       raise "Operands should be booleans"
+    end
+  end
+
+  def visit_bitwise_or(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
+
+    if left_primitive.instance_of?(Ast::Integer) && right_primitive.instance_of?(Ast::Integer)
+      bitwise_or = left_primitive.raw_value | right_primitive.raw_value
+      Ast::Integer.new(bitwise_or)
+    else
+      raise "Operands should be integer"
+    end
+  end
+
+  def visit_bitwise_and(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
+
+    if left_primitive.instance_of?(Ast::Integer) && right_primitive.instance_of?(Ast::Integer)
+      bitwise_and = left_primitive.raw_value & right_primitive.raw_value
+      Ast::Integer.new(bitwise_and)
+    else
+      raise "Operands should be integer"
+    end
+  end
+
+  def visit_bitwise_xor(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
+
+    if left_primitive.instance_of?(Ast::Integer) && right_primitive.instance_of?(Ast::Integer)
+      bitwise_xor = left_primitive.raw_value ^ right_primitive.raw_value
+      Ast::Integer.new(bitwise_xor)
+    else
+      raise "Operands should be integer"
+    end
+  end
+
+  def visit_left_shift(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
+
+    if left_primitive.instance_of?(Ast::Integer) && right_primitive.instance_of?(Ast::Integer)
+      left_shift = left_primitive.raw_value << right_primitive.raw_value
+      Ast::Integer.new(left_shift)
+    else
+      raise "Operands should be integer"
+    end
+  end
+
+  def visit_right_shift(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
+
+    if left_primitive.instance_of?(Ast::Integer) && right_primitive.instance_of?(Ast::Integer)
+      right_shift = left_primitive.raw_value >> right_primitive.raw_value
+      Ast::Integer.new(right_shift)
+    else
+      raise "Operands should be integer"
+    end
+  end
+
+  def visit_bitwise_not(node)
+    primitive = node.raw_value.visit(self)
+
+    if primitive.instance_of?(Ast::Integer)
+      bitwise_not = ~primitive.raw_value
+      Ast::Integer.new(bitwise_not)
+    else
+      raise "Operand should be integer"
+    end
+  end
+
+  def visit_cast_float(node)
+    primitive = node.raw_value.visit(self)
+    if primitive.instance_of?(Ast::Integer) || primitive.instance_of?(Ast::Float) || primitive.instance_of?(Ast::String)
+      new_float = primitive.raw_value.to_f
+      Ast::Float.new(new_float)
+    else
+      raise "Invalid operand"
+    end
+  end
+
+def visit_cast_integer(node)
+    primitive = node.raw_value.visit(self)
+
+    if primitive.instance_of?(Ast::Integer) || primitive.instance_of?(Ast::Float) || primitive.instance_of?(Ast::String)
+        new_int = primitive.raw_value.to_i
+        Ast::Integer.new(new_int)
+    else
+      raise "Invalid operand"
+    end
+  end
+
+  def visit_equals(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
+
+    if check_comp_ops(left_primitive, right_primitive)
+      compared = left_primitive.raw_value == right_primitive.raw_value
+      Ast::Boolean.new(compared)
+    else
+      raise "Invalid operand(s)"
+    end
+  end
+
+  def visit_not_equals(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
+
+    if check_comp_ops(left_primitive, right_primitive)
+      compared = left_primitive.raw_value != right_primitive.raw_value
+      Ast::Boolean.new(compared)
+    else
+      raise "Invalid operand(s)"
+    end
+  end
+
+  def visit_less_than(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
+
+    if check_comp_ops(left_primitive, right_primitive)
+      compared = left_primitive.raw_value < right_primitive.raw_value
+      Ast::Boolean.new(compared)
+    else
+      raise "Invalid operand(s)"
+    end
+  end
+
+  def visit_less_than_equals(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
+
+    if check_comp_ops(left_primitive, right_primitive)
+      compared = left_primitive.raw_value <= right_primitive.raw_value
+      Ast::Boolean.new(compared)
+    else
+      raise "Invalid operand(s)"
+    end
+  end
+
+  def visit_greater_than(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
+
+    if check_comp_ops(left_primitive, right_primitive)
+      compared = left_primitive.raw_value > right_primitive.raw_value
+      Ast::Boolean.new(compared)
+    else
+      raise "Invalid operand(s)"
+    end
+  end
+
+  def visit_greater_than_equals(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
+
+    if check_comp_ops(left_primitive, right_primitive)
+      compared = left_primitive.raw_value >= right_primitive.raw_value
+      Ast::Boolean.new(compared)
+    else
+      raise "Invalid operand(s)"
     end
   end
 

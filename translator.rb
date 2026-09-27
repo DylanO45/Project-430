@@ -48,4 +48,64 @@ class Translator
       "#{node.left_node.visit(self)} || #{node.right_node.visit(self)}"
   end
 
+  def visit_bitwise_or(node)
+      "#{node.left_node.visit(self)} | #{node.right_node.visit(self)}"
+  end
+
+  def visit_bitwise_and(node)
+      "#{node.left_node.visit(self)} & #{node.right_node.visit(self)}"
+  end
+
+  def visit_bitwise_xor(node)
+      "#{node.left_node.visit(self)} ^ #{node.right_node.visit(self)}"
+  end
+
+  def visit_left_shift(node)
+      "#{node.left_node.visit(self)} << #{node.right_node.visit(self)}"
+  end
+
+  def visit_right_shift(node)
+      "#{node.left_node.visit(self)} >> #{node.right_node.visit(self)}"
+  end
+
+  def visit_bitwise_not(node)
+      "~#{node.raw_value.visit(self)}"
+  end
+
+  def visit_cast_float(node)
+      "(float) (#{node.raw_value.visit(self)})"
+  end
+
+  def visit_cast_integer(node)
+      "(int) (#{node.raw_value.visit(self)})"
+  end
+
+  def visit_equals(node)
+      "#{node.left_node.visit(self)} == #{node.right_node.visit(self)}"
+  end
+
+  def visit_not_equals(node)
+      "#{node.left_node.visit(self)} != #{node.right_node.visit(self)}"
+  end
+
+  def visit_less_than(node)
+      "#{node.left_node.visit(self)} < #{node.right_node.visit(self)}"
+  end
+
+  def visit_less_than_equals(node)
+      "#{node.left_node.visit(self)} <= #{node.right_node.visit(self)}"
+  end
+
+  def visit_greater_than(node)
+      "#{node.left_node.visit(self)} > #{node.right_node.visit(self)}"
+  end
+
+  def visit_greater_than_equals(node)
+      "#{node.left_node.visit(self)} >= #{node.right_node.visit(self)}"
+  end
+
+
+
+
+
 end
