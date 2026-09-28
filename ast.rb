@@ -15,7 +15,6 @@ module Ast
 
     end
 
-
     class NULL
         attr_reader :raw_value
 
@@ -211,5 +210,73 @@ module Ast
             visitor.visit_greater_than_equals(self)
         end
     end
+
+
+    # Cell rvalue and rvalue
+
+    class CellLvalue
+        attr_reader :column_node, :row_node
+
+        def initialize(column_node, row_node)
+            @column_node = column_node
+            @row_node = row_node
+        end
+
+        def visit(visitor)
+            visitor.visit_cell_lvalue(self)
+        end
+    end
+
+    class CellRvalue
+        attr_reader :column_node, :row_node
+
+        def initialize(column_node, row_node)
+            @column_node = column_node
+            @row_node = row_node
+        end
+
+        def visit(visitor)
+            visitor.visit_cell_rvalue(self)
+        end
+    end
+
+    class CellAddress
+        attr_reader :column, :row
+
+        def initialize(column, row)
+            @column = column
+            @row = row
+        end
+
+        def visit(visitor)
+            visitor.visit_type(self)
+        end
+    end
+
+    class Sum < BinaryOperator
+
+        def visit(visitor)
+            visitor.visit_sum(self)
+        end
+    end
+
+    class Min < BinaryOperator
+        def visit(visitor)
+            visitor.visit_min(self)
+        end
+    end
+
+    class Max < BinaryOperator
+        def visit(visitor)
+            visitor.visit_max(self)
+        end
+    end
+
+    class Mean < BinaryOperator
+        def visit(visitor)
+            visitor.visit_mean(self)
+        end
+    end
+
 
 end

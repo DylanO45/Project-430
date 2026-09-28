@@ -1,6 +1,11 @@
 require_relative 'ast.rb'
+require_relative 'grid.rb'
+
 
 class Evaluator
+  def initialize(grid = nil)
+    @grid = grid
+  end
   # Check the type compatibility of arithmetic operands
   def check_arith_ops(left, right)
     # if both ints, return :int
@@ -35,8 +40,6 @@ class Evaluator
     end
   end
 
-
-
   def visit_type(node)
     # For integers, float, strings, and boolean values. This returns the current single value/type
     if node.raw_value == "NULL"
@@ -63,7 +66,6 @@ class Evaluator
         raise "Invalid operand(s)"
       end
     end
-
     # Perform calculation
     sum = left_primitive.raw_value + right_primitive.raw_value
 
@@ -249,6 +251,8 @@ class Evaluator
     end
   end
 
+  # BITWISE OPERATIONS ===============================================
+
   def visit_bitwise_or(node)
     left_primitive = node.left_node.visit(self)
     right_primitive = node.right_node.visit(self)
@@ -320,6 +324,8 @@ class Evaluator
     end
   end
 
+  # CASTING OPERATIONS ===============================================
+
   def visit_cast_float(node)
     primitive = node.raw_value.visit(self)
     if primitive.instance_of?(Ast::Integer) || primitive.instance_of?(Ast::Float) || primitive.instance_of?(Ast::String)
@@ -330,7 +336,7 @@ class Evaluator
     end
   end
 
-def visit_cast_integer(node)
+  def visit_cast_integer(node)
     primitive = node.raw_value.visit(self)
 
     if primitive.instance_of?(Ast::Integer) || primitive.instance_of?(Ast::Float) || primitive.instance_of?(Ast::String)
@@ -340,6 +346,8 @@ def visit_cast_integer(node)
       raise "Invalid operand"
     end
   end
+
+  # COMPARISON OPERATIONS ===============================================
 
   def visit_equals(node)
     left_primitive = node.left_node.visit(self)
@@ -412,5 +420,165 @@ def visit_cast_integer(node)
       raise "Invalid operand(s)"
     end
   end
+
+  def visit_cell_lvalue(node)
+    column_val = node.column_node.visit(self)
+    row_val = node.row_node.visit(self)
+
+    Ast::CellAddress.new(column_val.raw_value, row_val.raw_value)
+  end
+
+  def visit_cell_rvalue(node)
+    column_val = node.column_node.visit(self)
+    row_val = node.row_node.visit(self)
+
+    address = Ast::CellAddress.new(column_val.raw_value, row_val.raw_value)
+    @grid.get_value(address)
+  end
+
+  def visit_sum(node)
+    left_primitive = node.left_node.visit(self)
+    right_primitive = node.right_node.visit(self)
+
+    if left_primitive.instance_of?(Ast::CellAddress) && right_primitive.instance_of?(Ast::CellAddress)
+      sum = 0
+
+      # Sort to handle ranges specified in either direction (e.g., B2:A1 vs A1:B2)
+      cols = [left_primitive.column, right_primitive.column].sort
+      rows = [left_primitive.row, right_primitive.row].sort
+
+      (cols[0]..cols[1]).each do |col|
+        (rows[0]..rows[1]).each do |row|
+          address = Ast::CellAddress.new(col, row)
+          value_node = @grid.get_value(address)
+
+          # Skip or handle nil cells gracefully if needed
+          next unless value_node
+
+          if value_node.instance_of?(Ast::Integer) || value_node.instance_of?(Ast::Float)
+            sum += value_node.raw_value
+          else
+            raise "Invalid operand(s)"
+          end
+        end
+      end
+
+      # Return the result wrapped in the correct Ast node type
+      sum.is_a?(Float) ? Ast::Float.new(sum) : Ast::Integer.new(sum)
+    else
+      raise "Invalid operand(s)"
+    end
+  end
+
+  def visit_max(node)
+    left_primitive = node.left_node.visit(self) # start cell address
+    right_primitive = node.right_node.visit(self) # final cell address
+
+    max_val = nil
+    is_float = false
+
+    if (left_primitive.instance_of?(Ast::CellAddress) && right_primitive.instance_of?(Ast::CellAddress))
+      # Loop through columns and roww
+      (left_primitive.column..right_primitive.column).each do |col|
+        (left_primitive.row..right_primitive.row).each do |row|
+          address = Ast::CellAddress.new(col, row)
+          cell_val = @grid.get_value(address)
+
+          if cell_val
+            # If max_val is initialized or cell_val is new max, overwrite max_val
+            if max_val == nil || cell_val.raw_value > max_val
+              max_val = cell_val.raw_value
+              is_float = cell_val.instance_of?(Ast::Float)
+            end
+          end
+        end
+      end
+
+      if max_val == nil
+        raise "Empty range"
+      end
+
+      if is_float
+        Ast::Float.new(max_val)
+      else
+        Ast::Integer.new(max_val)
+      end
+
+    else
+      raise "Invalid operand(s)"
+    end
+  end
+
+  def visit_min(node)
+    left_primitive = node.left_node.visit(self) # start cell address
+    right_primitive = node.right_node.visit(self) # final cell address
+
+    min_val = nil
+    is_float = false
+
+    if (left_primitive.instance_of?(Ast::CellAddress) && right_primitive.instance_of?(Ast::CellAddress))
+      # Loop through columns and roww
+      (left_primitive.column..right_primitive.column).each do |col|
+        (left_primitive.row..right_primitive.row).each do |row|
+          address = Ast::CellAddress.new(col, row)
+          cell_val = @grid.get_value(address)
+
+          if cell_val
+            # If min_val is initialized or cell_val is new max, overwrite max_val
+            if min_val == nil || cell_val.raw_value < min_val
+              min_val = cell_val.raw_value
+              is_float = cell_val.instance_of?(Ast::Float)
+            end
+          end
+        end
+      end
+
+      if min_val == nil
+        raise "Empty range"
+      end
+
+      if is_float
+        Ast::Float.new(min_val)
+      else
+        Ast::Integer.new(min_val)
+      end
+
+    else
+      raise "Invalid operand(s)"
+    end
+  end
+
+  def visit_mean(node)
+    left_primitive = node.left_node.visit(self) # start cell address
+    right_primitive = node.right_node.visit(self) # final cell address
+
+    total_sum = 0
+    count = 0
+
+    if (left_primitive.instance_of?(Ast::CellAddress) && right_primitive.instance_of?(Ast::CellAddress))
+      # Loop through columns and roww
+      (left_primitive.column..right_primitive.column).each do |col|
+        (left_primitive.row..right_primitive.row).each do |row|
+          address = Ast::CellAddress.new(col, row)
+          cell_val = @grid.get_value(address)
+
+          if cell_val
+            total_sum += cell_val.raw_value
+            count += 1
+          end
+        end
+      end
+
+      if count == 0
+        raise "Empty range"
+      end
+
+      mean = total_sum.to_f / count
+      Ast::Float.new(mean)
+    else
+      raise "Invalid operand(s)"
+    end
+  end
+
 
 end

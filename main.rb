@@ -1,12 +1,81 @@
 require_relative 'ast.rb'
 require_relative 'translator.rb'
 require_relative 'evaluator.rb'
+require_relative 'grid.rb'
 
 
+class Runtime
+  attr_reader :grid
 
-# ======================================================
-translator = Translator.new
-evaluator = Evaluator.new
+  def initialize
+    @grid = Grid.new
+    @evaluator = Evaluator.new(@grid)
+    @Translator = Translator.new
+  end
+
+  def visit(column, row, ast)
+    puts ast.visit(Translator.new)
+    begin
+      address = Ast::CellAddress.new(column, row)
+      @grid.set_cell(address, ast)
+      puts @grid.get_value(address).raw_value
+    rescue => e
+      STDERR.puts "ERROR: #{e}"
+    end
+    puts
+  end
+end
+
+runtime = Runtime.new
+
+
+# INITIALIZE CELLS ===================
+ast = Ast::Integer.new(10)
+runtime.visit(3, 1, ast)
+
+ast = Ast::Integer.new(4)
+runtime.visit(2, 1, ast)
+
+ast = Ast::Integer.new(3)
+runtime.visit(0, 0, ast)
+
+ast = Ast::Integer.new(7)
+runtime.visit(0, 1, ast)
+
+ast = Ast::Integer.new(2)
+runtime.visit(1, 2, ast)
+
+ast = Ast::Integer.new(4)
+runtime.visit(1, 3, ast)
+
+ast = Ast::Integer.new(6)
+runtime.visit(2, 2, ast)
+
+ast = Ast::Integer.new(8)
+runtime.visit(2, 3, ast)
+
+ast = Ast::Integer.new(1)
+runtime.visit(3, 2, ast)
+
+ast = Ast::Integer.new(3)
+runtime.visit(3, 3, ast)
+
+ast = Ast::Integer.new(5)
+runtime.visit(4, 2, ast)
+
+ast = Ast::Integer.new(7)
+runtime.visit(4, 3, ast)
+
+ast = Ast::Integer.new(9)
+runtime.visit(5, 2, ast)
+
+ast = Ast::Integer.new(12)
+
+runtime.visit(5, 3, ast)
+ast = Ast::Integer.new(10)
+runtime.visit(2, 4, ast)
+# ==========================================
+
 
 # Ints
 one = Ast::Integer.new(1)
@@ -24,6 +93,178 @@ bool_false = Ast::Boolean.new(false)
 string = Ast::String.new("Hello")
 string2 = Ast::String.new("World")
 
+# Arithmetic: (7 * 4 + 3) % 12
+ast = Ast::Modulo.new(
+  Ast::Add.new(
+    Ast::Multiply.new(
+      Ast::Integer.new(7),
+      Ast::Integer.new(4)
+    ),
+    Ast::Integer.new(3)
+  ),
+  Ast::Integer.new(12)
+)
+runtime.visit(0, 1, ast)
+
+# Arithmetic negation and cell rvalues: #[3, 1] * -#[2, 1]
+ast = Ast::Multiply.new(
+  Ast::CellRvalue.new(
+    Ast::Integer.new(3),
+    Ast::Integer.new(1)
+  ),
+  Ast::Negate.new(
+    Ast::CellRvalue.new(
+      Ast::Integer.new(2),
+      Ast::Integer.new(1)
+    )
+  )
+)
+runtime.visit(0, 2, ast)
+
+# Rvalue lookup and shift: #[1 + 1, 4] << 3
+ast = Ast::LeftShift.new(
+  Ast::CellRvalue.new(
+    Ast::Add.new(
+      Ast::Integer.new(1),
+      Ast::Integer.new(1)
+    ),
+    Ast::Integer.new(4)
+  ),
+  Ast::Integer.new(3)
+)
+runtime.visit(0, 3, ast)
+
+# Rvalue lookup and comparison: #[0, 0] < #[0, 1]
+ast = Ast::LessThan.new(
+  Ast::CellRvalue.new(
+    Ast::Integer.new(0),
+    Ast::Integer.new(0)
+  ),
+  Ast::CellRvalue.new(
+    Ast::Integer.new(0),
+    Ast::Integer.new(1)
+  )
+)
+runtime.visit(0, 4, ast)
+
+# Logic and comparison: !(3.3 > 3.2)
+ast = Ast::LogicalNot.new(
+  Ast::GreaterThan.new(
+    Ast::Float.new(3.3),
+    Ast::Float.new(3.2)
+  )
+)
+runtime.visit(0, 5, ast)
+
+# Double negation: --(6 * 8)
+ast = Ast::Negate.new(
+  Ast::Negate.new(
+    Ast::Multiply.new(
+      Ast::Integer.new(6),
+      Ast::Integer.new(8)
+    )
+  )
+)
+runtime.visit(0, 6, ast)
+
+# Bitwise operations: ~5 | ~8
+ast = Ast::BitwiseOr.new(
+  Ast::BitwiseNot.new(
+    Ast::Integer.new(5)
+  ),
+  Ast::BitwiseNot.new(
+    Ast::Integer.new(8)
+  )
+)
+runtime.visit(0, 7, ast)
+
+# Sum: sum([1, 2], [5, 3])
+ast = Ast::Sum.new(
+  Ast::CellLvalue.new(
+    Ast::Integer.new(1),
+    Ast::Integer.new(2)
+  ),
+  Ast::CellLvalue.new(
+    Ast::Integer.new(5),
+    Ast::Integer.new(3)
+  )
+)
+runtime.visit(0, 8, ast)
+
+# Mean: mean([1, 2], [5, 3])
+ast = Ast::Mean.new(
+  Ast::CellLvalue.new(
+    Ast::Integer.new(1),
+    Ast::Integer.new(2)
+  ),
+  Ast::CellLvalue.new(
+    Ast::Integer.new(5),
+    Ast::Integer.new(3)
+  )
+)
+runtime.visit(0, 9, ast)
+
+# Min: min([1, 2], [5, 3])
+ast = Ast::Min.new(
+  Ast::CellLvalue.new(
+    Ast::Integer.new(1),
+    Ast::Integer.new(2)
+  ),
+  Ast::CellLvalue.new(
+    Ast::Integer.new(5),
+    Ast::Integer.new(3)
+  )
+)
+runtime.visit(0, 10, ast)
+
+# Max: max([1, 2], [5, 3])
+ast = Ast::Max.new(
+  Ast::CellLvalue.new(
+    Ast::Integer.new(1),
+    Ast::Integer.new(2)
+  ),
+  Ast::CellLvalue.new(
+    Ast::Integer.new(5),
+    Ast::Integer.new(3)
+  )
+)
+runtime.visit(0, 11, ast)
+
+# Casting: float(7) / 2
+ast = Ast::Divide.new(
+  Ast::CastFloat.new(
+    Ast::Integer.new(7)
+  ),
+  Ast::Integer.new(2)
+)
+runtime.visit(0, 12, ast)
+
+# 7.5 << 2 (Shift left with a float)
+ast = Ast::LeftShift.new(
+  Ast::Float.new(7.5),
+  Ast::Integer.new(2)
+)
+runtime.visit(0, 13, ast)
+
+# true >= 10 (Comparison between a boolean and an integer)
+ast = Ast::GreaterThanEqual.new(
+  Ast::Boolean.new(true),
+  Ast::Integer.new(10)
+)
+runtime.visit(0, 14, ast)
+
+# "fooo" / 3 (Division with a string)
+ast = Ast::Divide.new(
+  Ast::String.new("fooo"),
+  Ast::Integer.new(3)
+)
+runtime.visit(0, 15, ast)
+
+
+
+
+translator = Translator.new
+evaluator = Evaluator.new
 
 
 
