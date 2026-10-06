@@ -20,15 +20,6 @@ class Evaluator
     end
   end
 
-  # Check the type compatibility of logical operands
-  def check_log_ops(left, right)
-    if left.instance_of?(Ast::Boolean) && right.instance_of?(Ast::Boolean)
-      true
-    else
-      false
-    end
-  end
-
   # Check the type compatibility of comparison operands
   def check_comp_ops(left, right)
     if left.instance_of?(Ast::String) && right.instance_of?(Ast::String)
@@ -41,12 +32,7 @@ class Evaluator
   end
 
   def visit_type(node)
-    # For integers, float, strings, and boolean values. This returns the current single value/type
-    if node.raw_value == "NULL"
-      nil
-    else
-      node
-    end
+    node
   end
 
   # ARITHMETIC OPERATIONS ===============================================
@@ -228,11 +214,18 @@ class Evaluator
 
   def visit_logical_and(node)
     left_primitive = node.left_node.visit(self)
-    right_primitive = node.right_node.visit(self)
 
-    if check_log_ops(left_primitive, right_primitive)
-      logical_and = left_primitive.raw_value && right_primitive.raw_value
-      Ast::Boolean.new(logical_and)
+    # Short circuit if possible
+    if left_primitive.instance_of?(Ast::Boolean)
+      return Ast::Boolean.new(false) if left_primitive.raw_value == false
+    else
+      raise "Operands should be booleans"
+    end
+
+    # Continue with right op if no short circuit
+    right_primitive = node.right_node.visit(self)
+    if right_primitive.instance_of?(Ast::Boolean)
+      Ast::Boolean.new(right_primitive.raw_value)
     else
       raise "Operands should be booleans"
     end
@@ -241,11 +234,18 @@ class Evaluator
 
   def visit_logical_or(node)
     left_primitive = node.left_node.visit(self)
-    right_primitive = node.right_node.visit(self)
 
-    if check_log_ops(left_primitive, right_primitive)
-      logical_or = left_primitive.raw_value || right_primitive.raw_value
-      Ast::Boolean.new(logical_or)
+    # Short circuit if possible
+    if left_primitive.instance_of?(Ast::Boolean)
+      return Ast::Boolean.new(true) if left_primitive.raw_value == true
+    else
+      raise "Operands should be booleans"
+    end
+
+    # Continue with right op if no short circuit
+    right_primitive = node.right_node.visit(self)
+    if right_primitive.instance_of?(Ast::Boolean)
+      Ast::Boolean.new(right_primitive.raw_value)
     else
       raise "Operands should be booleans"
     end

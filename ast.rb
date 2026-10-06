@@ -15,7 +15,7 @@ module Ast
 
     end
 
-    class NULL
+    class Null
         attr_reader :raw_value
 
         def initialize(raw_value)
