@@ -2,56 +2,39 @@ require_relative 'translator.rb'
 require_relative 'evaluator.rb'
 
 module Ast
-    class Integer
+    class Primitive
         attr_reader :raw_value
 
         def initialize(raw_value)
             @raw_value = raw_value
         end
-
-        def visit(visitor)
-            visitor.visit_type(self)
-        end
-
     end
 
-    class Null
-        attr_reader :raw_value
-
-        def initialize(raw_value)
-            @raw_value = raw_value
-        end
-
+    class Integer < Primitive
         def visit(visitor)
             visitor.visit_type(self)
         end
     end
 
-    class Float < Integer
+    class Null < Primitive
         def visit(visitor)
             visitor.visit_type(self)
         end
     end
 
-    class String
-        attr_reader :raw_value
-
-        def initialize(raw_value)
-            @raw_value = raw_value
-        end
-
+    class Float < Primitive
         def visit(visitor)
             visitor.visit_type(self)
         end
     end
 
-    class Boolean
-        attr_reader :raw_value
-
-        def initialize(raw_value)
-            @raw_value = raw_value
+    class String < Primitive
+        def visit(visitor)
+            visitor.visit_type(self)
         end
+    end
 
+    class Boolean < Primitive
         def visit(visitor)
             visitor.visit_type(self)
         end

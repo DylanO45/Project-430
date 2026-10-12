@@ -10,8 +10,8 @@ end
 
 class Grid
   def initialize()
-    # 2D Array
-    @grid = Array.new(100) { Array.new(100) }
+    # Hash
+    @grid = {}
   end
 
   def set_cell(address, ast)
@@ -21,7 +21,7 @@ class Grid
       evaluator = Evaluator.new(self)
 
       # Find or create a cell at this address
-      cell = @grid[col][row] ||= Cell.new(address, ast)
+      cell = @grid[[col, row]] ||= Cell.new(address, ast)
       cell.ast = ast
 
       # Evaluate the tree and store its model primitive
@@ -32,7 +32,7 @@ class Grid
       col = address.column
       row = address.row
 
-      cell = @grid[col][row]
+      cell = @grid[[col, row]]
       return nil unless cell
 
       # Return the cell's model primitive

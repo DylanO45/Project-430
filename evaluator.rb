@@ -112,7 +112,7 @@ class Evaluator
     elsif return_type == :float
       Ast::Float.new(product)
     else
-      raise "Invaild type to be multiplied"
+      raise "Invalid type to be multiplied"
     end
   end
 
@@ -423,17 +423,34 @@ class Evaluator
 
   def visit_cell_lvalue(node)
     column_val = node.column_node.visit(self)
-    row_val = node.row_node.visit(self)
 
-    Ast::CellAddress.new(column_val.raw_value, row_val.raw_value)
+    if column_val.instance_of?(Ast::Integer)
+      row_val = node.row_node.visit(self)
+
+      if row_val.instance_of?(Ast::Integer)
+        Ast::CellAddress.new(column_val.raw_value, row_val.raw_value)
+      else
+        raise "Row must be integer"
+      end
+    else
+      raise "Column must be integer"
+    end
   end
 
   def visit_cell_rvalue(node)
     column_val = node.column_node.visit(self)
-    row_val = node.row_node.visit(self)
+    if column_val.instance_of?(Ast::Integer)
+      row_val = node.row_node.visit(self)
 
-    address = Ast::CellAddress.new(column_val.raw_value, row_val.raw_value)
-    @grid.get_value(address)
+      if row_val.instance_of?(Ast::Integer)
+        address = Ast::CellAddress.new(column_val.raw_value, row_val.raw_value)
+        @grid.get_value(address)
+      else
+        raise "Row must be integer"
+      end
+    else
+      raise "Column must be integer"
+    end
   end
 
   def visit_sum(node)
