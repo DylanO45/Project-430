@@ -39,6 +39,18 @@ class Lexer
       elsif has('/')
         capture
         emit_token(:slash)
+      elsif has('-')
+        capture
+        emit_token(:Subtract)
+      elsif has('*')
+        capture
+        emit_token(:Multiply)
+      elsif has('%')
+        capture
+        emit_token(:Modulo)
+      elsif has('')
+        capture
+        emit_token(:)
       elsif has_digit
         while has_digit
           capture
@@ -48,7 +60,7 @@ class Lexer
       end
     end
 
-    @token
+    @tokens
   end
 end
 
