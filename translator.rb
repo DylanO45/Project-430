@@ -1,5 +1,4 @@
 require_relative 'ast.rb'
-require_relative 'evaluator.rb'
 
 class Translator
   #visit_... method turns current node into type String

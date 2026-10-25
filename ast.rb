@@ -1,6 +1,3 @@
-require_relative 'translator.rb'
-require_relative 'evaluator.rb'
-
 module Ast
     class Primitive
         attr_reader :raw_value
