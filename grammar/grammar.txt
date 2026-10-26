@@ -6,15 +6,64 @@ level0 = level0 OR level1
 level1 = level1 AND level2
         | level2
 
-level2 = level 1
-        |
-        |
+level2 = level2 BIT_OR level3
         | level3
 
-true or false and true
+level3 = level3 BIT_XOR level4
+        | level4
 
+level4 = level4 BIT_AND level5
+        | level5
 
+level5 = level5 EQUALS level6
+        | level5 N_EQUALS level6
+        | level6
 
-OR
-AND
+level6 = level6 LT level7
+        | level6 LTE level7
+        | level6 GT level7
+        | level6 GTE level7
+        | level7
+
+level7 = level7 L_SHIFT level8
+        | level7 R_SHIFT level8
+        | level8
+
+level8 = level8 PLUS level9
+        | level8 MINUS level9
+        | level9
+
+level9 = level9 MULT level10
+        | level9 DIV level10
+        | level9 MOD level10
+        | level10
+
+level10 = level11 POWER level10
+        | level11
+
+level11 = MINUS level11
+        | NOT level11
+        | BIT_NOT level11
+        | FLOAT_CAST level11
+        | INT_CAST level11
+        | level12
+
+level12 = INTEGER
+        | FLOAT
+        | BOOL
+        | STRING
+        | NULL
+        | L_PAREN expression R_PAREN
+        | lvalue
+        | rvalue
+        | stat_function
+
+lvalue = L_BRACKET expression COMMA expression R_BRACKET
+
+rvalue = HASH L_BRACKET expression COMMA expression R_BRACKET
+
+stat_function = MAX L_PAREN expression COMMA expression R_PAREN
+                | MIN L_PAREN expression COMMA expression R_PAREN
+                | MEAN L_PAREN expression COMMA expression R_PAREN
+                | SUM L_PAREN expression COMMA expression R_PAREN
 

@@ -2,6 +2,8 @@ require_relative 'ast.rb'
 require_relative 'translator.rb'
 require_relative 'evaluator.rb'
 require_relative 'grid.rb'
+require_relative 'parser.rb'
+require_relative 'lexer.rb'
 
 
 class Runtime
@@ -26,36 +28,36 @@ class Runtime
   end
 end
 
+
 runtime = Runtime.new
-
-
-# INITIALIZE CELLS ===================
+# # INITIALIZE CELLS ===================
 ast = Ast::Integer.new(10)
-runtime.visit(3, 1, ast)
-
-ast = Ast::Integer.new(4)
-runtime.visit(2, 1, ast)
-
-ast = Ast::Integer.new(3)
 runtime.visit(0, 0, ast)
 
-ast = Ast::Integer.new(7)
+ast = Ast::Integer.new(4)
 runtime.visit(0, 1, ast)
 
+ast = Ast::Integer.new(3)
+runtime.visit(0, 2, ast)
+
+ast = Ast::Integer.new(7)
+runtime.visit(1, 0, ast)
+
 ast = Ast::Integer.new(2)
-runtime.visit(1, 2, ast)
+runtime.visit(1, 1, ast)
 
 ast = Ast::Integer.new(4)
-runtime.visit(1, 3, ast)
+runtime.visit(1, 2, ast)
 
 ast = Ast::Integer.new(6)
-runtime.visit(2, 2, ast)
+runtime.visit(2, 0, ast)
 
 ast = Ast::Integer.new(8)
-runtime.visit(2, 3, ast)
+runtime.visit(2, 1, ast)
 
 ast = Ast::Integer.new(1)
-runtime.visit(3, 2, ast)
+runtime.visit(3,
+2, ast)
 
 ast = Ast::Integer.new(3)
 runtime.visit(3, 3, ast)
@@ -74,734 +76,926 @@ ast = Ast::Integer.new(12)
 runtime.visit(5, 3, ast)
 ast = Ast::Integer.new(10)
 runtime.visit(2, 4, ast)
-# ==========================================
+# # ==========================================
 
+# Lexer and Parser testing
 
-# Ints
-one = Ast::Integer.new(1)
-five = Ast::Integer.new(5)
-ten = Ast::Integer.new(10)
-three = Ast::Integer.new(3)
-neg_hundred = Ast::Integer.new(-100)
-# Floats
-float1 = Ast::Float.new(2.5)
-float2 = Ast::Float.new(3.14)
-# Bools
-bool_true = Ast::Boolean.new(true)
-bool_false = Ast::Boolean.new(false)
-# Strings
-string = Ast::String.new("Hello")
-string2 = Ast::String.new("World")
+# Arithmetic
+source = "(5 + 2) * 3 % 4"
+lexer = Lexer.new(source)
+tokens = lexer.lex
+parser = Parser.new(tokens)
+ast = parser.parse
+runtime.visit(5, 5, ast)
 
-# Arithmetic: (7 * 4 + 3) % 12
-ast = Ast::Modulo.new(
-  Ast::Add.new(
-    Ast::Multiply.new(
-      Ast::Integer.new(7),
-      Ast::Integer.new(4)
-    ),
-    Ast::Integer.new(3)
-  ),
-  Ast::Integer.new(12)
-)
-runtime.visit(0, 1, ast)
+# Boolean
+source = "true == !!!false"
+lexer = Lexer.new(source)
+tokens = lexer.lex
+parser = Parser.new(tokens)
+ast = parser.parse
+runtime.visit(5, 5, ast)
 
-# Arithmetic negation and cell rvalues: #[3, 1] * -#[2, 1]
-ast = Ast::Multiply.new(
-  Ast::CellRvalue.new(
-    Ast::Integer.new(3),
-    Ast::Integer.new(1)
-  ),
-  Ast::Negate.new(
-    Ast::CellRvalue.new(
-      Ast::Integer.new(2),
-      Ast::Integer.new(1)
-    )
-  )
-)
+# Rvalue lookup and shift
+source = "#[0, 0] << 3"
+lexer = Lexer.new(source)
+tokens = lexer.lex
+parser = Parser.new(tokens)
+ast = parser.parse
 runtime.visit(0, 2, ast)
 
-# Rvalue lookup and shift: #[1 + 1, 4] << 3
-ast = Ast::LeftShift.new(
-  Ast::CellRvalue.new(
-    Ast::Add.new(
-      Ast::Integer.new(1),
-      Ast::Integer.new(1)
-    ),
-    Ast::Integer.new(4)
-  ),
-  Ast::Integer.new(3)
-)
+# Rvalue lookup and comparison
+source = "#[1 - 1, 0] < #[1 * 1, 1]"
+lexer = Lexer.new(source)
+tokens = lexer.lex
+parser = Parser.new(tokens)
+ast = parser.parse
 runtime.visit(0, 3, ast)
 
-# Rvalue lookup and comparison: #[0, 0] < #[0, 1]
-ast = Ast::LessThan.new(
-  Ast::CellRvalue.new(
-    Ast::Integer.new(0),
-    Ast::Integer.new(0)
-  ),
-  Ast::CellRvalue.new(
-    Ast::Integer.new(0),
-    Ast::Integer.new(1)
-  )
-)
+# Logic and comparison
+source = "(5 > 3) && !(2 > 8)"
+lexer = Lexer.new(source)
+tokens = lexer.lex
+parser = Parser.new(tokens)
+ast = parser.parse
 runtime.visit(0, 4, ast)
 
-# Logic and comparison: !(3.3 > 3.2)
-ast = Ast::LogicalNot.new(
-  Ast::GreaterThan.new(
-    Ast::Float.new(3.3),
-    Ast::Float.new(3.2)
-  )
-)
+# Sum
+source = "1 + sum([0, 0], [2, 1])"
+lexer = Lexer.new(source)
+tokens = lexer.lex
+parser = Parser.new(tokens)
+ast = parser.parse
 runtime.visit(0, 5, ast)
 
-# Double negation: --(6 * 8)
-ast = Ast::Negate.new(
-  Ast::Negate.new(
-    Ast::Multiply.new(
-      Ast::Integer.new(6),
-      Ast::Integer.new(8)
-    )
-  )
-)
+# Casting
+source = "(float)10 / 4.0"
+lexer = Lexer.new(source)
+tokens = lexer.lex
+parser = Parser.new(tokens)
+ast = parser.parse
 runtime.visit(0, 6, ast)
 
-# Bitwise operations: ~5 | ~8
-ast = Ast::BitwiseOr.new(
-  Ast::BitwiseNot.new(
-    Ast::Integer.new(5)
-  ),
-  Ast::BitwiseNot.new(
-    Ast::Integer.new(8)
-  )
-)
+# Exponentiation
+source = "2 ** 3 ** 2"
+lexer = Lexer.new(source)
+tokens = lexer.lex
+parser = Parser.new(tokens)
+ast = parser.parse
 runtime.visit(0, 7, ast)
 
-# Sum: sum([1, 2], [5, 3])
-ast = Ast::Sum.new(
-  Ast::CellLvalue.new(
-    Ast::Integer.new(1),
-    Ast::Integer.new(2)
-  ),
-  Ast::CellLvalue.new(
-    Ast::Integer.new(5),
-    Ast::Integer.new(3)
-  )
-)
+# Negation and bitwise and
+source = "45 & (-)(-)(-)(1 + 3)"
+lexer = Lexer.new(source)
+tokens = lexer.lex
+parser = Parser.new(tokens)
+ast = parser.parse
 runtime.visit(0, 8, ast)
 
-# Mean: mean([1, 2], [5, 3])
-ast = Ast::Mean.new(
-  Ast::CellLvalue.new(
-    Ast::Integer.new(1),
-    Ast::Integer.new(2)
-  ),
-  Ast::CellLvalue.new(
-    Ast::Integer.new(5),
-    Ast::Integer.new(3)
-  )
-)
-runtime.visit(0, 9, ast)
-
-# Min: min([1, 2], [5, 3])
-ast = Ast::Min.new(
-  Ast::CellLvalue.new(
-    Ast::Integer.new(1),
-    Ast::Integer.new(2)
-  ),
-  Ast::CellLvalue.new(
-    Ast::Integer.new(5),
-    Ast::Integer.new(3)
-  )
-)
-runtime.visit(0, 10, ast)
-
-# Max: max([1, 2], [5, 3])
-ast = Ast::Max.new(
-  Ast::CellLvalue.new(
-    Ast::Integer.new(1),
-    Ast::Integer.new(2)
-  ),
-  Ast::CellLvalue.new(
-    Ast::Integer.new(5),
-    Ast::Integer.new(3)
-  )
-)
-runtime.visit(0, 11, ast)
-
-# Casting: float(7) / 2
-ast = Ast::Divide.new(
-  Ast::CastFloat.new(
-    Ast::Integer.new(7)
-  ),
-  Ast::Integer.new(2)
-)
-runtime.visit(0, 12, ast)
-
-# 7.5 << 2 (Shift left with a float)
-ast = Ast::LeftShift.new(
-  Ast::Float.new(7.5),
-  Ast::Integer.new(2)
-)
-runtime.visit(0, 13, ast)
-
-# true >= 10 (Comparison between a boolean and an integer)
-ast = Ast::GreaterThanEqual.new(
-  Ast::Boolean.new(true),
-  Ast::Integer.new(10)
-)
-runtime.visit(0, 14, ast)
-
-# "fooo" / 3 (Division with a string)
-ast = Ast::Divide.new(
-  Ast::String.new("fooo"),
-  Ast::Integer.new(3)
-)
-runtime.visit(0, 15, ast)
+puts "Type an expression: "
+source = gets.chomp
+lexer = Lexer.new(source)
+tokens = lexer.lex
+parser = Parser.new(tokens)
+ast = parser.parse
+runtime.visit(2, 4, ast)
 
 
+puts "========= ERROR CHECKING ==========="
 
-
-translator = Translator.new
-evaluator = Evaluator.new
-
-
-
-# ================ ADDITION ================
-puts " Addition (Both ints) ".center(50, "=")
-result = Ast::Add.new(five, ten)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
-
-puts " Addition (Both floats) ".center(50, "=")
-result2 = Ast::Add.new(float1, float2)
-puts result2.visit(translator)
-puts result2.visit(evaluator).visit(translator)
-
-puts " Addition (One int, one float) ".center(50, "=")
-result3 = Ast::Add.new(ten, float2)
-puts result3.visit(translator)
-puts result3.visit(evaluator).visit(translator)
-
-puts " Addition (Incompatible types) ".center(50, "=")
-result4 = Ast::Add.new(bool_false, bool_true)
+# Lexer fail: $money
 begin
-  puts result4.visit(translator)
-  puts result4.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
+  source = "$money"
+  puts source
+  lexer = Lexer.new(source)
+  tokens = lexer.lex
+  parser = Parser.new(tokens)
+  ast = parser.parse
+  runtime.visit(6, 0, ast)
+rescue => e
+  puts "ERROR: #{e}\n\n"
 end
 
-puts " Addition (Both strings) ".center(50, "=")
-result5 = Ast::Add.new(string, string2)
-puts result5.visit(translator)
-puts result5.visit(evaluator).visit(translator)
-
-puts
-puts
-
-# ================ SUBTRACTION ================
-puts " Subtraction (Both ints) ".center(50, "=")
-result = Ast::Subtract.new(five, ten)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
-
-puts " Subtraction (Both floats) ".center(50, "=")
-result2 = Ast::Subtract.new(float1, float2)
-puts result2.visit(translator)
-puts result2.visit(evaluator).visit(translator)
-
-puts " Subtraction (One int, one float) ".center(50, "=")
-result3 = Ast::Subtract.new(ten, float2)
-puts result3.visit(translator)
-puts result3.visit(evaluator).visit(translator)
-
-puts " Subtraction (Incompatible types) ".center(50, "=")
-result4 = Ast::Subtract.new(bool_false, bool_true)
+# Lexer fail: 40ish
 begin
-  puts result4.visit(translator)
-  puts result4.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
+  source = "40ish"
+  puts source
+  lexer = Lexer.new(source)
+  tokens = lexer.lex
+  parser = Parser.new(tokens)
+  ast = parser.parse
+  runtime.visit(6, 1, ast)
+rescue => e
+  puts "ERROR: #{e}\n\n"
 end
 
-puts
-puts
-
-# ================ MULTIPLICATION ================
-puts " Multiplication (Both ints) ".center(50, "=")
-result = Ast::Multiply.new(five, ten)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
-
-puts " Multiplication (Both floats) ".center(50, "=")
-result2 = Ast::Multiply.new(float1, float2)
-puts result2.visit(translator)
-puts result2.visit(evaluator).visit(translator)
-
-puts " Multiplication (One int, one float) ".center(50, "=")
-result3 = Ast::Multiply.new(ten, float2)
-puts result3.visit(translator)
-puts result3.visit(evaluator).visit(translator)
-
-puts " Multiplication (Incompatible types) ".center(50, "=")
-result4 = Ast::Multiply.new(bool_false, bool_true)
+# Lexer or parser fail: 1.2.3.4.5
 begin
-  puts result4.visit(translator)
-  puts result4.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
+  source = "1.2.3.4.5"
+  puts source
+  lexer = Lexer.new(source)
+  tokens = lexer.lex
+  parser = Parser.new(tokens)
+  ast = parser.parse
+  runtime.visit(6, 2, ast)
+rescue => e
+  puts "ERROR: #{e}\n\n"
 end
 
-puts
-puts
-
-# ================ DIVISION ================
-puts " Division (Both ints) ".center(50, "=")
-result = Ast::Divide.new(ten, five)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
-
-puts " Division (Both floats) ".center(50, "=")
-result2 = Ast::Divide.new(float1, float2)
-puts result2.visit(translator)
-puts result2.visit(evaluator).visit(translator)
-
-puts " Division (One int, one float) ".center(50, "=")
-result3 = Ast::Divide.new(ten, float2)
-puts result3.visit(translator)
-puts result3.visit(evaluator).visit(translator)
-
-puts " Division (Incompatible types) ".center(50, "=")
-result4 = Ast::Divide.new(bool_false, bool_true)
+# Parser fail: #[5]
 begin
-  puts result4.visit(translator)
-  puts result4.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
+  source = "#[5]"
+  puts source
+  lexer = Lexer.new(source)
+  tokens = lexer.lex
+  parser = Parser.new(tokens)
+  ast = parser.parse
+  runtime.visit(6, 3, ast)
+rescue => e
+  puts "ERROR: #{e}\n\n"
 end
 
-puts
-puts
-
-# ================ MODULO ================
-puts " Modulo (Both ints) ".center(50, "=")
-result = Ast::Modulo.new(ten, three)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
-
-puts " Modulo (Both floats) ".center(50, "=")
-result2 = Ast::Modulo.new(float1, float2)
-puts result2.visit(translator)
-puts result2.visit(evaluator).visit(translator)
-
-puts " Modulo (One int, one float) ".center(50, "=")
-result3 = Ast::Modulo.new(ten, float2)
-puts result3.visit(translator)
-puts result3.visit(evaluator).visit(translator)
-
-puts " Modulo (Incompatible types) ".center(50, "=")
-result4 = Ast::Modulo.new(bool_false, bool_true)
+# Parser fail: 5 + 6 8
 begin
-  puts result4.visit(translator)
-  puts result4.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
+  source = "5 + 6 8"
+  puts source
+  lexer = Lexer.new(source)
+  tokens = lexer.lex
+  parser = Parser.new(tokens)
+  ast = parser.parse
+  runtime.visit(6, 4, ast)
+rescue => e
+  puts "ERROR: #{e}\n\n"
 end
 
-puts
-puts
-
-
-# ================ EXPONENTIATION ================
-puts " Exponent (Both ints) ".center(50, "=")
-result = Ast::Exponent.new(ten, five)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
-
-puts " Exponent (Both floats) ".center(50, "=")
-result2 = Ast::Exponent.new(float1, float2)
-puts result2.visit(translator)
-puts result2.visit(evaluator).visit(translator)
-
-puts " Exponent (One int, one float) ".center(50, "=")
-result3 = Ast::Exponent.new(ten, float2)
-puts result3.visit(translator)
-puts result3.visit(evaluator).visit(translator)
-
-puts " Exponent (Incompatible types) ".center(50, "=")
-result4 = Ast::Exponent.new(bool_false, bool_true)
+# Parser fail: ----
 begin
-  puts result4.visit(translator)
-  puts result4.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
+  source = "----"
+  puts source
+  lexer = Lexer.new(source)
+  tokens = lexer.lex
+  parser = Parser.new(tokens)
+  ast = parser.parse
+  runtime.visit(6, 5, ast)
+rescue => e
+  puts "ERROR: #{e}\n\n"
 end
 
-puts
-puts
-
-# ================ NEGATION ================
-puts " Negate (Int) ".center(50, "=")
-result = Ast::Negate.new(neg_hundred)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
-
-puts " Negate (Float) ".center(50, "=")
-result2 = Ast::Negate.new(float1)
-puts result2.visit(translator)
-puts result2.visit(evaluator).visit(translator)
-
-puts " Negate (Incompatible type) ".center(50, "=")
-result3 = Ast::Negate.new(bool_true)
+# Parser fail: ()
 begin
-  puts result3.visit(translator)
-  puts result3.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
+  source = "()"
+  puts source
+  lexer = Lexer.new(source)
+  tokens = lexer.lex
+  parser = Parser.new(tokens)
+  ast = parser.parse
+  runtime.visit(6, 6, ast)
+rescue => e
+  puts "ERROR: #{e}\n\n"
 end
 
-puts
-puts
-
-# ================ LOGICAL AND ================
-puts " Logical And (Both bools) ".center(50, "=")
-result = Ast::LogicalAnd.new(bool_true, bool_false)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
-
-puts " Logical And (Both bools) ".center(50, "=")
-result = Ast::LogicalAnd.new(bool_true, bool_true)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
-
-puts " Logical And (Incompatible types) ".center(50, "=")
-result4 = Ast::LogicalAnd.new(ten, bool_true)
+# Parser fail: sum()
 begin
-  puts result4.visit(translator)
-  puts result4.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
+  source = "sum()"
+  puts source
+  lexer = Lexer.new(source)
+  tokens = lexer.lex
+  parser = Parser.new(tokens)
+  ast = parser.parse
+  runtime.visit(6, 7, ast)
+rescue => e
+  puts "ERROR: #{e}\n\n"
 end
 
-puts
-puts
 
-# ================ LOGICAL OR ================
-puts " Logical Or (Both bools) ".center(50, "=")
-result = Ast::LogicalOr.new(bool_true, bool_false)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
 
-puts " Logical Or (Both bools) ".center(50, "=")
-result = Ast::LogicalOr.new(bool_false, bool_false)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
 
-puts " Logical Or (Incompatible types) ".center(50, "=")
-result4 = Ast::LogicalOr.new(ten, bool_true)
-begin
-  puts result4.visit(translator)
-  puts result4.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
 
-puts
-puts
+# # Ints
+# one = Ast::Integer.new(1)
+# five = Ast::Integer.new(5)
+# ten = Ast::Integer.new(10)
+# three = Ast::Integer.new(3)
+# neg_hundred = Ast::Integer.new(-100)
+# # Floats
+# float1 = Ast::Float.new(2.5)
+# float2 = Ast::Float.new(3.14)
+# # Bools
+# bool_true = Ast::Boolean.new(true)
+# bool_false = Ast::Boolean.new(false)
+# # Strings
+# string = Ast::String.new("Hello")
+# string2 = Ast::String.new("World")
 
-# ================ LOGICAL NOT ================
-puts " Logical Not (True) ".center(50, "=")
-result = Ast::LogicalNot.new(bool_true)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
+# # Arithmetic: (7 * 4 + 3) % 12
+# ast = Ast::Modulo.new(
+#   Ast::Add.new(
+#     Ast::Multiply.new(
+#       Ast::Integer.new(7),
+#       Ast::Integer.new(4)
+#     ),
+#     Ast::Integer.new(3)
+#   ),
+#   Ast::Integer.new(12)
+# )
+# runtime.visit(0, 1, ast)
 
-puts " Logical Not (False) ".center(50, "=")
-result = Ast::LogicalNot.new(bool_false)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
+# # Arithmetic negation and cell rvalues: #[3, 1] * -#[2, 1]
+# ast = Ast::Multiply.new(
+#   Ast::CellRvalue.new(
+#     Ast::Integer.new(3),
+#     Ast::Integer.new(1)
+#   ),
+#   Ast::Negate.new(
+#     Ast::CellRvalue.new(
+#       Ast::Integer.new(2),
+#       Ast::Integer.new(1)
+#     )
+#   )
+# )
+# runtime.visit(0, 2, ast)
 
-puts " Logical Not (Incompatible type) ".center(50, "=")
-result4 = Ast::LogicalNot.new(ten)
-begin
-  puts result4.visit(translator)
-  puts result4.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
+# # Rvalue lookup and shift: #[1 + 1, 4] << 3
+# ast = Ast::LeftShift.new(
+#   Ast::CellRvalue.new(
+#     Ast::Add.new(
+#       Ast::Integer.new(1),
+#       Ast::Integer.new(1)
+#     ),
+#     Ast::Integer.new(4)
+#   ),
+#   Ast::Integer.new(3)
+# )
+# runtime.visit(0, 3, ast)
 
-puts
-puts
+# # Rvalue lookup and comparison: #[0, 0] < #[0, 1]
+# ast = Ast::LessThan.new(
+#   Ast::CellRvalue.new(
+#     Ast::Integer.new(0),
+#     Ast::Integer.new(0)
+#   ),
+#   Ast::CellRvalue.new(
+#     Ast::Integer.new(0),
+#     Ast::Integer.new(1)
+#   )
+# )
+# runtime.visit(0, 4, ast)
 
-# ================ BITWISE AND ================
-puts " Bitwise And (Both ints) ".center(50, "=")
-result = Ast::BitwiseAnd.new(five, ten)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
+# # Logic and comparison: !(3.3 > 3.2)
+# ast = Ast::LogicalNot.new(
+#   Ast::GreaterThan.new(
+#     Ast::Float.new(3.3),
+#     Ast::Float.new(3.2)
+#   )
+# )
+# runtime.visit(0, 5, ast)
 
-puts " Bitwise And (Incompatible types) ".center(50, "=")
-begin
-  result3 = Ast::BitwiseAnd.new(float1, float2)
-  puts result3.visit(translator)
-  puts result3.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
+# # Double negation: --(6 * 8)
+# ast = Ast::Negate.new(
+#   Ast::Negate.new(
+#     Ast::Multiply.new(
+#       Ast::Integer.new(6),
+#       Ast::Integer.new(8)
+#     )
+#   )
+# )
+# runtime.visit(0, 6, ast)
 
-puts
-puts
+# # Bitwise operations: ~5 | ~8
+# ast = Ast::BitwiseOr.new(
+#   Ast::BitwiseNot.new(
+#     Ast::Integer.new(5)
+#   ),
+#   Ast::BitwiseNot.new(
+#     Ast::Integer.new(8)
+#   )
+# )
+# runtime.visit(0, 7, ast)
 
-# ================ BITWISE OR ================
-puts " Bitwise Or (Both ints) ".center(50, "=")
-result = Ast::BitwiseOr.new(five, ten)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
+# # Sum: sum([1, 2], [5, 3])
+# ast = Ast::Sum.new(
+#   Ast::CellLvalue.new(
+#     Ast::Integer.new(1),
+#     Ast::Integer.new(2)
+#   ),
+#   Ast::CellLvalue.new(
+#     Ast::Integer.new(5),
+#     Ast::Integer.new(3)
+#   )
+# )
+# runtime.visit(0, 8, ast)
 
-puts " Bitwise Or (Incompatible types) ".center(50, "=")
-result3 = Ast::BitwiseOr.new(string, ten)
-begin
-  puts result3.visit(translator)
-  puts result3.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
+# # Mean: mean([1, 2], [5, 3])
+# ast = Ast::Mean.new(
+#   Ast::CellLvalue.new(
+#     Ast::Integer.new(1),
+#     Ast::Integer.new(2)
+#   ),
+#   Ast::CellLvalue.new(
+#     Ast::Integer.new(5),
+#     Ast::Integer.new(3)
+#   )
+# )
+# runtime.visit(0, 9, ast)
 
-puts
-puts
+# # Min: min([1, 2], [5, 3])
+# ast = Ast::Min.new(
+#   Ast::CellLvalue.new(
+#     Ast::Integer.new(1),
+#     Ast::Integer.new(2)
+#   ),
+#   Ast::CellLvalue.new(
+#     Ast::Integer.new(5),
+#     Ast::Integer.new(3)
+#   )
+# )
+# runtime.visit(0, 10, ast)
 
-# ================ BITWISE XOR ================
-puts " Bitwise Xor (Both ints) ".center(50, "=")
-result = Ast::BitwiseXor.new(five, ten)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
+# # Max: max([1, 2], [5, 3])
+# ast = Ast::Max.new(
+#   Ast::CellLvalue.new(
+#     Ast::Integer.new(1),
+#     Ast::Integer.new(2)
+#   ),
+#   Ast::CellLvalue.new(
+#     Ast::Integer.new(5),
+#     Ast::Integer.new(3)
+#   )
+# )
+# runtime.visit(0, 11, ast)
 
-puts " Bitwise Xor (Incompatible types) ".center(50, "=")
-result3 = Ast::BitwiseXor.new(bool_true, ten)
-begin
-  puts result3.visit(translator)
-  puts result3.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
+# # Casting: float(7) / 2
+# ast = Ast::Divide.new(
+#   Ast::CastFloat.new(
+#     Ast::Integer.new(7)
+#   ),
+#   Ast::Integer.new(2)
+# )
+# runtime.visit(0, 12, ast)
 
-puts
-puts
+# # 7.5 << 2 (Shift left with a float)
+# ast = Ast::LeftShift.new(
+#   Ast::Float.new(7.5),
+#   Ast::Integer.new(2)
+# )
+# runtime.visit(0, 13, ast)
 
-# ================ LEFT SHIFT ================
-puts " Left Shift (Both ints) ".center(50, "=")
-result = Ast::LeftShift.new(five, one)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
+# # true >= 10 (Comparison between a boolean and an integer)
+# ast = Ast::GreaterThanEqual.new(
+#   Ast::Boolean.new(true),
+#   Ast::Integer.new(10)
+# )
+# runtime.visit(0, 14, ast)
 
-puts " Left Shift (Negative int) ".center(50, "=")
-result2 = Ast::LeftShift.new(neg_hundred, three)
-puts result2.visit(translator)
-puts result2.visit(evaluator).visit(translator)
+# # "fooo" / 3 (Division with a string)
+# ast = Ast::Divide.new(
+#   Ast::String.new("fooo"),
+#   Ast::Integer.new(3)
+# )
+# runtime.visit(0, 15, ast)
 
-puts " Left Shift (Incompatible types) ".center(50, "=")
-result3 = Ast::LeftShift.new(float1, ten)
-begin
-  puts result3.visit(translator)
-  puts result3.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
 
-puts
-puts
 
-# ================ RIGHT SHIFT ================
-puts " Right Shift (Both ints) ".center(50, "=")
-result = Ast::RightShift.new(ten, one)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
 
-puts " Right Shift (Negative int) ".center(50, "=")
-result2 = Ast::RightShift.new(neg_hundred, three)
-puts result2.visit(translator)
-puts result2.visit(evaluator).visit(translator)
+# translator = Translator.new
+# evaluator = Evaluator.new
 
-puts " Right Shift (Incompatible types) ".center(50, "=")
-result3 = Ast::RightShift.new(ten, bool_false)
-begin
-  puts result3.visit(translator)
-  puts result3.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
 
-puts
-puts
 
-# ================ BITWISE NOT ================
-puts " Bitwise Not (Positive Int) ".center(50, "=")
-result = Ast::BitwiseNot.new(five)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
+# # ================ ADDITION ================
+# puts " Addition (Both ints) ".center(50, "=")
+# result = Ast::Add.new(five, ten)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
 
-puts " Bitwise Not (Negative Int) ".center(50, "=")
-result2 = Ast::BitwiseNot.new(neg_hundred)
-puts result2.visit(translator)
-puts result2.visit(evaluator).visit(translator)
+# puts " Addition (Both floats) ".center(50, "=")
+# result2 = Ast::Add.new(float1, float2)
+# puts result2.visit(translator)
+# puts result2.visit(evaluator).visit(translator)
 
-puts " Bitwise Not (Incompatible type) ".center(50, "=")
-begin
-  result3 = Ast::BitwiseNot.new(float1)
-  puts result3.visit(translator)
-  puts result3.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
+# puts " Addition (One int, one float) ".center(50, "=")
+# result3 = Ast::Add.new(ten, float2)
+# puts result3.visit(translator)
+# puts result3.visit(evaluator).visit(translator)
 
-puts
-puts
+# puts " Addition (Incompatible types) ".center(50, "=")
+# result4 = Ast::Add.new(bool_false, bool_true)
+# begin
+#   puts result4.visit(translator)
+#   puts result4.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
 
-# ================ EQUALITY ================
-puts " Equals (Same ints) ".center(50, "=")
-result = Ast::Equals.new(five, five)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
+# puts " Addition (Both strings) ".center(50, "=")
+# result5 = Ast::Add.new(string, string2)
+# puts result5.visit(translator)
+# puts result5.visit(evaluator).visit(translator)
 
-puts " Equals (Different ints) ".center(50, "=")
-result2 = Ast::Equals.new(five, ten)
-puts result2.visit(translator)
-puts result2.visit(evaluator).visit(translator)
+# puts
+# puts
 
-puts " Equals (Same floats) ".center(50, "=")
-result3 = Ast::Equals.new(float1, float1)
-puts result3.visit(translator)
-puts result3.visit(evaluator).visit(translator)
+# # ================ SUBTRACTION ================
+# puts " Subtraction (Both ints) ".center(50, "=")
+# result = Ast::Subtract.new(five, ten)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
 
-puts " Equals (Different types) ".center(50, "=")
-begin
-  result4 = Ast::Equals.new(five, string)
-  puts result4.visit(translator)
-  puts result4.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
+# puts " Subtraction (Both floats) ".center(50, "=")
+# result2 = Ast::Subtract.new(float1, float2)
+# puts result2.visit(translator)
+# puts result2.visit(evaluator).visit(translator)
 
-puts " Not Equals (Same ints) ".center(50, "=")
-result5 = Ast::NotEquals.new(five, five)
-puts result5.visit(translator)
-puts result5.visit(evaluator).visit(translator)
+# puts " Subtraction (One int, one float) ".center(50, "=")
+# result3 = Ast::Subtract.new(ten, float2)
+# puts result3.visit(translator)
+# puts result3.visit(evaluator).visit(translator)
 
-puts " Not Equals (Different ints) ".center(50, "=")
-result6 = Ast::NotEquals.new(five, ten)
-puts result6.visit(translator)
-puts result6.visit(evaluator).visit(translator)
+# puts " Subtraction (Incompatible types) ".center(50, "=")
+# result4 = Ast::Subtract.new(bool_false, bool_true)
+# begin
+#   puts result4.visit(translator)
+#   puts result4.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
 
-puts " Not Equals (Different types) ".center(50, "=")
-begin
-  result7 = Ast::NotEquals.new(float1, string2)
-  puts result7.visit(translator)
-  puts result7.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
+# puts
+# puts
 
-puts
-puts
+# # ================ MULTIPLICATION ================
+# puts " Multiplication (Both ints) ".center(50, "=")
+# result = Ast::Multiply.new(five, ten)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
 
-# ================ COMPARISONS ================
-puts " Less Than (Ints - True) ".center(50, "=")
-result = Ast::LessThan.new(five, ten)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
+# puts " Multiplication (Both floats) ".center(50, "=")
+# result2 = Ast::Multiply.new(float1, float2)
+# puts result2.visit(translator)
+# puts result2.visit(evaluator).visit(translator)
 
-puts " Less Than (Ints - False) ".center(50, "=")
-result2 = Ast::LessThan.new(ten, five)
-puts result2.visit(translator)
-puts result2.visit(evaluator).visit(translator)
+# puts " Multiplication (One int, one float) ".center(50, "=")
+# result3 = Ast::Multiply.new(ten, float2)
+# puts result3.visit(translator)
+# puts result3.visit(evaluator).visit(translator)
 
-puts " Less Than (Floats) ".center(50, "=")
-result3 = Ast::LessThan.new(float1, float2)
-puts result3.visit(translator)
-puts result3.visit(evaluator).visit(translator)
+# puts " Multiplication (Incompatible types) ".center(50, "=")
+# result4 = Ast::Multiply.new(bool_false, bool_true)
+# begin
+#   puts result4.visit(translator)
+#   puts result4.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
 
-puts " Less Than Equal (Same Ints) ".center(50, "=")
-result4 = Ast::LessThanEqual.new(five, five)
-puts result4.visit(translator)
-puts result4.visit(evaluator).visit(translator)
+# puts
+# puts
 
-puts " Greater Than (Ints - False) ".center(50, "=")
-result5 = Ast::GreaterThan.new(five, ten)
-puts result5.visit(translator)
-puts result5.visit(evaluator).visit(translator)
+# # ================ DIVISION ================
+# puts " Division (Both ints) ".center(50, "=")
+# result = Ast::Divide.new(ten, five)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
 
-puts " Greater Than (Ints - True) ".center(50, "=")
-result6 = Ast::GreaterThan.new(ten, five)
-puts result6.visit(translator)
-puts result6.visit(evaluator).visit(translator)
+# puts " Division (Both floats) ".center(50, "=")
+# result2 = Ast::Divide.new(float1, float2)
+# puts result2.visit(translator)
+# puts result2.visit(evaluator).visit(translator)
 
-puts " Greater Than Equal (Same Ints) ".center(50, "=")
-result7 = Ast::GreaterThanEqual.new(five, five)
-puts result7.visit(translator)
-puts result7.visit(evaluator).visit(translator)
+# puts " Division (One int, one float) ".center(50, "=")
+# result3 = Ast::Divide.new(ten, float2)
+# puts result3.visit(translator)
+# puts result3.visit(evaluator).visit(translator)
 
-puts " Comparisons (Incompatible types) ".center(50, "=")
-result8 = Ast::LessThan.new(five, bool_true)
-begin
-  puts result8.visit(translator)
-  puts result8.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
+# puts " Division (Incompatible types) ".center(50, "=")
+# result4 = Ast::Divide.new(bool_false, bool_true)
+# begin
+#   puts result4.visit(translator)
+#   puts result4.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
 
-puts
-puts
+# puts
+# puts
 
-# ================ CAST FLOAT ================
-puts " Cast Float (From String) ".center(50, "=")
-result = Ast::CastFloat.new(string)
-begin
-  puts result.visit(translator)
-  puts result.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
+# # ================ MODULO ================
+# puts " Modulo (Both ints) ".center(50, "=")
+# result = Ast::Modulo.new(ten, three)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
 
-puts " Cast Float (From Int) ".center(50, "=")
-result2 = Ast::CastFloat.new(ten)
-puts result2.visit(translator)
-puts result2.visit(evaluator).visit(translator)
+# puts " Modulo (Both floats) ".center(50, "=")
+# result2 = Ast::Modulo.new(float1, float2)
+# puts result2.visit(translator)
+# puts result2.visit(evaluator).visit(translator)
 
-puts " Cast Float (From Bool) ".center(50, "=")
-result3 = Ast::CastFloat.new(bool_true)
-begin
-  puts result3.visit(translator)
-  puts result3.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
+# puts " Modulo (One int, one float) ".center(50, "=")
+# result3 = Ast::Modulo.new(ten, float2)
+# puts result3.visit(translator)
+# puts result3.visit(evaluator).visit(translator)
 
-puts
-puts
+# puts " Modulo (Incompatible types) ".center(50, "=")
+# result4 = Ast::Modulo.new(bool_false, bool_true)
+# begin
+#   puts result4.visit(translator)
+#   puts result4.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
 
-# ================ CAST INTEGER ================
-puts " Cast Integer (From Float) ".center(50, "=")
-result = Ast::CastInteger.new(float1)
-puts result.visit(translator)
-puts result.visit(evaluator).visit(translator)
+# puts
+# puts
 
-puts " Cast Integer (From Bool) ".center(50, "=")
-result2 = Ast::CastInteger.new(bool_false)
-begin
-  puts result2.visit(translator)
-  puts result2.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
 
-puts " Cast Integer (From String) ".center(50, "=")
-result3 = Ast::CastInteger.new(string)
-begin
-  puts result3.visit(translator)
-  puts result3.visit(evaluator).visit(translator)
-rescue RuntimeError => e
-  puts "Error caught: #{e}"
-end
+# # ================ EXPONENTIATION ================
+# puts " Exponent (Both ints) ".center(50, "=")
+# result = Ast::Exponent.new(ten, five)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
 
-puts
-puts
+# puts " Exponent (Both floats) ".center(50, "=")
+# result2 = Ast::Exponent.new(float1, float2)
+# puts result2.visit(translator)
+# puts result2.visit(evaluator).visit(translator)
+
+# puts " Exponent (One int, one float) ".center(50, "=")
+# result3 = Ast::Exponent.new(ten, float2)
+# puts result3.visit(translator)
+# puts result3.visit(evaluator).visit(translator)
+
+# puts " Exponent (Incompatible types) ".center(50, "=")
+# result4 = Ast::Exponent.new(bool_false, bool_true)
+# begin
+#   puts result4.visit(translator)
+#   puts result4.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ NEGATION ================
+# puts " Negate (Int) ".center(50, "=")
+# result = Ast::Negate.new(neg_hundred)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Negate (Float) ".center(50, "=")
+# result2 = Ast::Negate.new(float1)
+# puts result2.visit(translator)
+# puts result2.visit(evaluator).visit(translator)
+
+# puts " Negate (Incompatible type) ".center(50, "=")
+# result3 = Ast::Negate.new(bool_true)
+# begin
+#   puts result3.visit(translator)
+#   puts result3.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ LOGICAL AND ================
+# puts " Logical And (Both bools) ".center(50, "=")
+# result = Ast::LogicalAnd.new(bool_true, bool_false)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Logical And (Both bools) ".center(50, "=")
+# result = Ast::LogicalAnd.new(bool_true, bool_true)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Logical And (Incompatible types) ".center(50, "=")
+# result4 = Ast::LogicalAnd.new(ten, bool_true)
+# begin
+#   puts result4.visit(translator)
+#   puts result4.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ LOGICAL OR ================
+# puts " Logical Or (Both bools) ".center(50, "=")
+# result = Ast::LogicalOr.new(bool_true, bool_false)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Logical Or (Both bools) ".center(50, "=")
+# result = Ast::LogicalOr.new(bool_false, bool_false)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Logical Or (Incompatible types) ".center(50, "=")
+# result4 = Ast::LogicalOr.new(ten, bool_true)
+# begin
+#   puts result4.visit(translator)
+#   puts result4.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ LOGICAL NOT ================
+# puts " Logical Not (True) ".center(50, "=")
+# result = Ast::LogicalNot.new(bool_true)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Logical Not (False) ".center(50, "=")
+# result = Ast::LogicalNot.new(bool_false)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Logical Not (Incompatible type) ".center(50, "=")
+# result4 = Ast::LogicalNot.new(ten)
+# begin
+#   puts result4.visit(translator)
+#   puts result4.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ BITWISE AND ================
+# puts " Bitwise And (Both ints) ".center(50, "=")
+# result = Ast::BitwiseAnd.new(five, ten)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Bitwise And (Incompatible types) ".center(50, "=")
+# begin
+#   result3 = Ast::BitwiseAnd.new(float1, float2)
+#   puts result3.visit(translator)
+#   puts result3.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ BITWISE OR ================
+# puts " Bitwise Or (Both ints) ".center(50, "=")
+# result = Ast::BitwiseOr.new(five, ten)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Bitwise Or (Incompatible types) ".center(50, "=")
+# result3 = Ast::BitwiseOr.new(string, ten)
+# begin
+#   puts result3.visit(translator)
+#   puts result3.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ BITWISE XOR ================
+# puts " Bitwise Xor (Both ints) ".center(50, "=")
+# result = Ast::BitwiseXor.new(five, ten)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Bitwise Xor (Incompatible types) ".center(50, "=")
+# result3 = Ast::BitwiseXor.new(bool_true, ten)
+# begin
+#   puts result3.visit(translator)
+#   puts result3.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ LEFT SHIFT ================
+# puts " Left Shift (Both ints) ".center(50, "=")
+# result = Ast::LeftShift.new(five, one)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Left Shift (Negative int) ".center(50, "=")
+# result2 = Ast::LeftShift.new(neg_hundred, three)
+# puts result2.visit(translator)
+# puts result2.visit(evaluator).visit(translator)
+
+# puts " Left Shift (Incompatible types) ".center(50, "=")
+# result3 = Ast::LeftShift.new(float1, ten)
+# begin
+#   puts result3.visit(translator)
+#   puts result3.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ RIGHT SHIFT ================
+# puts " Right Shift (Both ints) ".center(50, "=")
+# result = Ast::RightShift.new(ten, one)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Right Shift (Negative int) ".center(50, "=")
+# result2 = Ast::RightShift.new(neg_hundred, three)
+# puts result2.visit(translator)
+# puts result2.visit(evaluator).visit(translator)
+
+# puts " Right Shift (Incompatible types) ".center(50, "=")
+# result3 = Ast::RightShift.new(ten, bool_false)
+# begin
+#   puts result3.visit(translator)
+#   puts result3.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ BITWISE NOT ================
+# puts " Bitwise Not (Positive Int) ".center(50, "=")
+# result = Ast::BitwiseNot.new(five)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Bitwise Not (Negative Int) ".center(50, "=")
+# result2 = Ast::BitwiseNot.new(neg_hundred)
+# puts result2.visit(translator)
+# puts result2.visit(evaluator).visit(translator)
+
+# puts " Bitwise Not (Incompatible type) ".center(50, "=")
+# begin
+#   result3 = Ast::BitwiseNot.new(float1)
+#   puts result3.visit(translator)
+#   puts result3.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ EQUALITY ================
+# puts " Equals (Same ints) ".center(50, "=")
+# result = Ast::Equals.new(five, five)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Equals (Different ints) ".center(50, "=")
+# result2 = Ast::Equals.new(five, ten)
+# puts result2.visit(translator)
+# puts result2.visit(evaluator).visit(translator)
+
+# puts " Equals (Same floats) ".center(50, "=")
+# result3 = Ast::Equals.new(float1, float1)
+# puts result3.visit(translator)
+# puts result3.visit(evaluator).visit(translator)
+
+# puts " Equals (Different types) ".center(50, "=")
+# begin
+#   result4 = Ast::Equals.new(five, string)
+#   puts result4.visit(translator)
+#   puts result4.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts " Not Equals (Same ints) ".center(50, "=")
+# result5 = Ast::NotEquals.new(five, five)
+# puts result5.visit(translator)
+# puts result5.visit(evaluator).visit(translator)
+
+# puts " Not Equals (Different ints) ".center(50, "=")
+# result6 = Ast::NotEquals.new(five, ten)
+# puts result6.visit(translator)
+# puts result6.visit(evaluator).visit(translator)
+
+# puts " Not Equals (Different types) ".center(50, "=")
+# begin
+#   result7 = Ast::NotEquals.new(float1, string2)
+#   puts result7.visit(translator)
+#   puts result7.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ COMPARISONS ================
+# puts " Less Than (Ints - True) ".center(50, "=")
+# result = Ast::LessThan.new(five, ten)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Less Than (Ints - False) ".center(50, "=")
+# result2 = Ast::LessThan.new(ten, five)
+# puts result2.visit(translator)
+# puts result2.visit(evaluator).visit(translator)
+
+# puts " Less Than (Floats) ".center(50, "=")
+# result3 = Ast::LessThan.new(float1, float2)
+# puts result3.visit(translator)
+# puts result3.visit(evaluator).visit(translator)
+
+# puts " Less Than Equal (Same Ints) ".center(50, "=")
+# result4 = Ast::LessThanEqual.new(five, five)
+# puts result4.visit(translator)
+# puts result4.visit(evaluator).visit(translator)
+
+# puts " Greater Than (Ints - False) ".center(50, "=")
+# result5 = Ast::GreaterThan.new(five, ten)
+# puts result5.visit(translator)
+# puts result5.visit(evaluator).visit(translator)
+
+# puts " Greater Than (Ints - True) ".center(50, "=")
+# result6 = Ast::GreaterThan.new(ten, five)
+# puts result6.visit(translator)
+# puts result6.visit(evaluator).visit(translator)
+
+# puts " Greater Than Equal (Same Ints) ".center(50, "=")
+# result7 = Ast::GreaterThanEqual.new(five, five)
+# puts result7.visit(translator)
+# puts result7.visit(evaluator).visit(translator)
+
+# puts " Comparisons (Incompatible types) ".center(50, "=")
+# result8 = Ast::LessThan.new(five, bool_true)
+# begin
+#   puts result8.visit(translator)
+#   puts result8.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ CAST FLOAT ================
+# puts " Cast Float (From String) ".center(50, "=")
+# result = Ast::CastFloat.new(string)
+# begin
+#   puts result.visit(translator)
+#   puts result.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts " Cast Float (From Int) ".center(50, "=")
+# result2 = Ast::CastFloat.new(ten)
+# puts result2.visit(translator)
+# puts result2.visit(evaluator).visit(translator)
+
+# puts " Cast Float (From Bool) ".center(50, "=")
+# result3 = Ast::CastFloat.new(bool_true)
+# begin
+#   puts result3.visit(translator)
+#   puts result3.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts
+
+# # ================ CAST INTEGER ================
+# puts " Cast Integer (From Float) ".center(50, "=")
+# result = Ast::CastInteger.new(float1)
+# puts result.visit(translator)
+# puts result.visit(evaluator).visit(translator)
+
+# puts " Cast Integer (From Bool) ".center(50, "=")
+# result2 = Ast::CastInteger.new(bool_false)
+# begin
+#   puts result2.visit(translator)
+#   puts result2.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts " Cast Integer (From String) ".center(50, "=")
+# result3 = Ast::CastInteger.new(string)
+# begin
+#   puts result3.visit(translator)
+#   puts result3.visit(evaluator).visit(translator)
+# rescue RuntimeError => e
+#   puts "Error caught: #{e}"
+# end
+
+# puts
+# puts

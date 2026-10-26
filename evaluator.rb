@@ -26,6 +26,8 @@ class Evaluator
       true
     elsif (left.instance_of?(Ast::Integer) || left.instance_of?(Ast::Float)) && (right.instance_of?(Ast::Integer) || right.instance_of?(Ast::Float))
       true
+    elsif left.instance_of?(Ast::Boolean) && right.instance_of?(Ast::Boolean) # Added to fix bool == bool error
+      true
     else
       false
     end
